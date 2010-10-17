@@ -32,7 +32,9 @@ iframe {
 EOS
 
 my $i   = 0;
+my $mid = 0;
 my $sessions = {};
+my $results  = {};
 
 my $app = sub {
 	my $env = shift;
@@ -82,8 +84,9 @@ my $app = sub {
 						};
 					}
 				},
-				'/p' => sub {
+				'/api/run' => sub {
 					my $message = {
+						id   => $mid++,
 						host => $req->address,
 						body => $req->param('m'),
 					};
@@ -99,6 +102,28 @@ my $app = sub {
 						} else {
 							push @{ $session->{messages} }, $message;
 						}
+						$results->{ $message->{id} }->{count}++;
+					}
+
+					$results->{ $message->{id} }->{callback} = sub {
+						my $results = shift;
+						$res->content_type('application/json');
+						$res->content(encode_json +{ status => 'ok', results => $results });
+						$callback->($res->finalize);
+					};
+				},
+				'/api/done' => sub {
+					my $id = $req->param('id');
+					my $message = {
+						host => $req->address,
+						body => $req->param('m'),
+					};
+					my $result = $results->{$id};
+					$result->{results}->{ $req->header('User-Agent') } = $message;
+					$result->{count}--;
+
+					if ($result->{count} == 0) {
+						$result->{callback}->($result->{results});
 					}
 
 					$res->content_type('application/json');
