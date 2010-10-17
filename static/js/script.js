@@ -59,7 +59,13 @@ $(function () {
 				var messages = data.messages;
 				for (var i = 0, len = messages.length; i < len; i++) {
 					var message = messages[i];
-					contentWindow.location.href = 'javascript:try{parent.callback(' + message.id + ', ' + message.body + ')}catch(e){parent.callback(' + message.id + ', e)}';
+					try {
+						code = 'try{parent.callback(' + message.id + ', ' + message.body + ')}catch(e){parent.callback(' + message.id + ', e)}';
+						fun = new Function(code); // check syntax error
+						contentWindow.location.href = 'javascript:' + code;
+					} catch (e) {
+						parent.callback(message.id, String(e));
+					}
 				}
 			},
 
