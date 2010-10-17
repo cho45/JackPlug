@@ -4,7 +4,7 @@ uneval = function (o) {
 		case "undefined" : return "(void 0)";
 		case "boolean"   : return String(o);
 		case "number"    : return String(o);
-		case "string"    : return '"' + o.replace(/[^a-z]/gi, function (_) { return '\\u' + (0x10000 + _.charCodeAt(0)).toString(16).slice(1) }) + '"';
+		case "string"    : return '"' + o.replace(/[^a-z !@#$%^&*()=_+{}\[\]|;:'"<>,.\/?-]/gi, function (_) { return '\\u' + (0x10000 + _.charCodeAt(0)).toString(16).slice(1) }) + '"';
 		case "function"  : return "(" + o.toString() + ")";
 		case "object"    :
 			if (o == null) return "null";
@@ -29,7 +29,7 @@ uneval = function (o) {
 					return "(new Date(" + o.getTime() + "))";
 				default:
 					if (o.toSource) return o.toSource();
-					throw TypeError("unknown type:"+o);
+					return String(o);
 			}
 	}
 	return "";
@@ -60,7 +60,7 @@ $(function () {
 				for (var i = 0, len = messages.length; i < len; i++) {
 					var message = messages[i];
 					try {
-						code = 'try{parent.callback(' + message.id + ', ' + message.body + ')}catch(e){parent.callback(' + message.id + ', e)}';
+						code = 'try{parent.callback(' + message.id + ', ' + message.body + ')}catch(e){parent.callback(' + message.id + ', String(e))}';
 						fun = new Function(code); // check syntax error
 						contentWindow.location.href = 'javascript:' + code;
 					} catch (e) {
